@@ -2,6 +2,11 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started  Next.js && React.js 
 
+<p align="start">
+  <a href="https://skillicons.dev">
+    <img src="https://skillicons.dev/icons?i=git,github,nextjs,ts,figma,react,vercel,tailwind" />
+  </a>
+</p>
 
 ![photo_3_2025-05-19_21-34-49](https://github.com/user-attachments/assets/dd1ed49b-06d3-417a-bb64-15c39bff37f8)
 
