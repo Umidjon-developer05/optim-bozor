@@ -17,7 +17,8 @@ export const ourFileRouter = {
       return { token };
     })
     .onUploadComplete(async ({ file }) => {
-      return file;
+      // Only return JSON-serializable data
+      return { key: file.key, name: file.name, url: file.url };
     }),
 } satisfies FileRouter;
 
