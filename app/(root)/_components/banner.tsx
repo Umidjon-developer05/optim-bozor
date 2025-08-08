@@ -29,7 +29,10 @@ const variants = {
   }),
 };
 
-const transition = {
+const transition: {
+  x: { type: "spring"; stiffness: number; damping: number };
+  opacity: { duration: number };
+} = {
   x: { type: "spring", stiffness: 300, damping: 30 },
   opacity: { duration: 0.2 },
 };
