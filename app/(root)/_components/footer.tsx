@@ -1,13 +1,4 @@
-import {
-  Facebook,
-  Instagram,
-  Youtube,
-  Send,
-  Phone,
-  Mail,
-  MapPin,
-  Clock,
-} from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 import Link from "next/link";
 
 export default function Footer() {
@@ -25,8 +16,8 @@ export default function Footer() {
               <h3 className="text-xl font-bold">optim bozor</h3>
             </div>
             <p className="text-gray-300 text-sm leading-relaxed">
-              O'zbekistondagi eng yaxshi onlayn do'kon. Sifatli mahsulotlar, tez
-              yetkazib berish va qulay narxlar.
+              O&apos;zbekistondagi eng yaxshi onlayn do&apos;kon. Sifatli
+              mahsulotlar, tez yetkazib berish va qulay narxlar.
             </p>
 
             {/* Contact Info */}
@@ -71,7 +62,7 @@ export default function Footer() {
                   href="#"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
-                  Bog'-tomorqa anjomlari
+                  Bog&apos;-tomorqa anjomlari
                 </Link>
               </li>
               <li>
@@ -118,7 +109,7 @@ export default function Footer() {
                   href="#"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
-                  To'lov usullari
+                  To&apos;lov usullari
                 </Link>
               </li>
               <li>
@@ -142,7 +133,7 @@ export default function Footer() {
                   href="#"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
-                  Bizning do'konlarimiz
+                  Bizning do&apos;konlarimiz
                 </Link>
               </li>
               <li>
@@ -324,8 +315,8 @@ export default function Footer() {
             <div className="space-y-2">
               <h5 className="font-medium">Yangiliklar</h5>
               <p className="text-sm text-gray-300">
-                Maxsus takliflar va yangiliklar haqida birinchi bo'lib bilib
-                oling
+                Maxsus takliflar va yangiliklar haqida birinchi bo&apos;lib
+                bilib oling
               </p>
               <div className="flex space-x-2">
                 <input
