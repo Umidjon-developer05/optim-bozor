@@ -1,7 +1,6 @@
 import { getProductCategorySlug } from "@/actions/user.action";
 import React from "react";
 import ProductGrid from "../../_components/product-grid";
-import { Subcategory } from "@/types";
 export async function generateMetadata({
   params,
 }: {
