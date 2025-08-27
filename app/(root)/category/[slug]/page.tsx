@@ -42,7 +42,6 @@ async function page({ params }: { params: { slug: string } }) {
   if (!id) {
     return <div className="container mx-auto">Invalid slug</div>;
   }
-  console;
   const categoryProduct = await getProductCategorySlug({
     parsedInput: { id },
   });
