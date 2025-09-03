@@ -1,14 +1,8 @@
-import AnimatedBackground from '@/components/shared/animated-background'
-import { ChildProps } from '@/types'
-import { FC } from 'react'
+import { ChildProps } from "@/types";
+import { FC } from "react";
 
 const AuthLayout: FC<ChildProps> = ({ children }) => {
-	return (
-		<section className='flex justify-center mt-44'>
-			<AnimatedBackground />
-			{children}
-		</section>
-	)
-}
+  return <section className="flex justify-center ">{children}</section>;
+};
 
-export default AuthLayout
+export default AuthLayout;
