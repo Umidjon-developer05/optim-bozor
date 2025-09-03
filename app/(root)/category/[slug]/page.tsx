@@ -56,4 +56,5 @@ async function page({ params }: { params: { slug: string } }) {
   );
 }
 
+
 export default page;
