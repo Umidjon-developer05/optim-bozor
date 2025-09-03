@@ -10,8 +10,8 @@ const AutoOAuthLogin: FC = () => {
   const { data: session } = useSession();
   useEffect(() => {
     const run = async () => {
-      const pending = (session as any)?.pendingOAuth;
-      const hasUser = (session as any)?.currentUser?._id;
+      const pending = session?.pendingOAuth;
+      const hasUser = session?.currentUser?._id;
       if (pending?.email && !hasUser && typeof window !== "undefined") {
         const res = await login({
           email: pending.email as string,

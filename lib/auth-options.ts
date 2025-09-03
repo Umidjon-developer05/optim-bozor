@@ -26,10 +26,10 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, account }) {
       if (account?.provider === "credentials" && user?.name) {
-        (token as any).userId = user.name;
+        token.userId = user.name;
       }
       if (account?.provider === "google" && user) {
-        (token as any).pendingOAuth = {
+        token.pendingOAuth = {
           email: user.email,
           fullName: user.name,
         };
@@ -37,8 +37,8 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      const userId = (token as any)?.userId as string | undefined;
-      const pendingOAuth = (token as any)?.pendingOAuth as
+      const userId = token?.userId as string | undefined;
+      const pendingOAuth = token?.pendingOAuth as
         | { email?: string | null; fullName?: string | null }
         | undefined;
 
@@ -51,7 +51,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (pendingOAuth) {
-        (session as any).pendingOAuth = pendingOAuth;
+        session.pendingOAuth = pendingOAuth;
       }
       return session;
     },

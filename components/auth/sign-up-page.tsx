@@ -2,7 +2,6 @@
 
 import { register, sendOtp, verifyOtp } from "@/actions/auth.action";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -18,7 +17,6 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import useAction from "@/hooks/use-action";
 import { toast } from "@/hooks/use-toast";
 import { otpSchema, registerSchema } from "@/lib/validation";

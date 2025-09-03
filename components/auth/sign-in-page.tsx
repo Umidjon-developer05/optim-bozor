@@ -2,7 +2,6 @@
 
 import { login } from "@/actions/auth.action";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -12,7 +11,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { loginSchema } from "@/lib/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -75,7 +73,7 @@ const SignInPage = () => {
           Xush kelibsiz
         </h1>
         <p className="text-sm text-gray-600">
-          Optim bozor hisobingizga kirish uchun ma'lumotlaringizni kiriting
+          Optim bozor hisobingizga kirish uchun ma&apos;lumotlaringizni kiriting
         </p>
       </div>
 
