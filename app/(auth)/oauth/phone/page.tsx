@@ -14,7 +14,7 @@ import { phoneSchema } from "@/lib/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader } from "lucide-react";
 import { useSession, signIn } from "next-auth/react";
-import {  useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -34,12 +34,12 @@ export default function OAuthPhonePage() {
   useEffect(() => {
     if (status === "loading") return;
     // If user already has a backend userId in session, go home
-    if ((session as any)?.currentUser?._id) {
+    if (session?.currentUser?._id) {
       router.replace("/");
       return;
     }
     // If no pending OAuth data, kick off Google sign-in
-    if (!(session as any)?.pendingOAuth?.email) {
+    if (!session?.pendingOAuth?.email) {
       signIn("google", { callbackUrl: "/oauth/phone" });
     }
   }, [session, status, router]);
@@ -47,10 +47,8 @@ export default function OAuthPhonePage() {
   async function onSubmit(values: z.infer<typeof phoneSchema>) {
     try {
       setIsLoading(true);
-      const email = (session as any)?.pendingOAuth?.email as string | undefined;
-      const fullName = (session as any)?.pendingOAuth?.fullName as
-        | string
-        | undefined;
+      const email = session?.pendingOAuth?.email as string | undefined;
+      const fullName = session?.pendingOAuth?.fullName as string | undefined;
       if (!email) {
         toast({
           description: "Google maʼlumoti topilmadi",
