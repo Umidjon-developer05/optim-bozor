@@ -39,6 +39,11 @@ export const metadata: Metadata = {
     description:
       "Optim Bozor mahsulotlarining keng assortimenti, xavfsiz to'lovlar va tez yetkazib berish xizmatlari bilan onlayn xaridlar uchun eng yaxshi manzildir.",
   },
+  icons: {
+    icon: "/icons/icon-192x192.png",
+    shortcut: "/icons/icon-192x192.png",
+    apple: "/icons/icon-192x192.png",
+  },
 };
 
 const RootLayout: FC<ChildProps> = ({ children }) => {
@@ -49,6 +54,7 @@ const RootLayout: FC<ChildProps> = ({ children }) => {
           className={`${montserrat.className} antialiased`}
           suppressHydrationWarning
         >
+          <link rel="manifest" href="/manifest.json" />
           <NextTopLoader showSpinner={false} />
           <main>{children}</main>
           <ClientToast />
