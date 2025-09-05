@@ -58,8 +58,6 @@ export const authOptions: NextAuthOptions = {
         token.userId = user.name; // _id
       }
       if (account?.provider === "google" && user) {
-        // Agar backend orqali user yaratsangiz/olib kelsangiz, shu yerda token.userId ni to'ldiring
-        // Masalan:
         const { data } = await axiosClient.post<ReturnActionType>(
           "/api/auth/oauth",
           { email: user.email, fullName: user.name }
