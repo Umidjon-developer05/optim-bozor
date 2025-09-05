@@ -15,7 +15,11 @@ export const authOptions: NextAuthOptions = {
           `/api/user/profile/${credentials?.userId}`
         );
         // NextAuth user obyekti
-        return { email: data.user.email, name: data.user._id } as any;
+        return {
+          id: data.user._id,
+          email: data.user.email,
+          name: data.user._id,
+        };
       },
     }),
     GoogleProvider({
@@ -74,7 +78,7 @@ export const authOptions: NextAuthOptions = {
         const { data } = await axiosClient.get<ReturnActionType>(
           `/api/user/profile/${userId}`
         );
-        (session as any).currentUser = data.user;
+        session.currentUser = data.user;
         if (session.user) {
           session.user.name = userId;
           session.user.email = data.user.email;
@@ -82,7 +86,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (pendingOAuth) {
-        (session as any).pendingOAuth = pendingOAuth;
+        session.pendingOAuth = pendingOAuth;
       }
 
       return session;
