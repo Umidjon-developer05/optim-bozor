@@ -20,8 +20,7 @@ export const authOptions: NextAuthOptions = {
             email: data.user.email,
             name: data.user._id,
           };
-        } catch (e) {
-          // throw qilmaslik — aks holda error=Callback bo‘ladi
+        } catch {
           return null;
         }
       },
