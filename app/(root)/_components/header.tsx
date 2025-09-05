@@ -10,8 +10,8 @@ import { useSession } from "next-auth/react";
 
 const Header: FC = () => {
   const { data } = useSession();
-  const sessionUser = data?.user; // AuthUser
-
+  const sessionUser = data?.currentUser; // AuthUser
+  console.log("sessionUser:", sessionUser);
   return (
     <div className="bg-white border-b sticky top-0 left-0 z-50">
       <div className="container mx-auto">

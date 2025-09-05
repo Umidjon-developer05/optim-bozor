@@ -18,7 +18,8 @@ export const authOptions: NextAuthOptions = {
           return {
             id: data.user._id,
             email: data.user.email,
-            name: data.user._id,
+            name: data.user.fullName,
+            image: data.user.image,
           };
         } catch {
           return null;
@@ -57,11 +58,16 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, account }) {
       try {
-        // Credentials flow: _id ni yozamiz
-        if (account?.provider === "credentials" && user?.name) {
-          token.userId = user.name as string;
+        // ❌ XATO:
+        // if (account?.provider === "credentials" && user?.name) {
+        //   token.userId = user.name as string;
+        // }
+
+        // ✅ TO‘G‘RI:
+        if (account?.provider === "credentials" && user?.id) {
+          token.userId = user.id as string; // ObjectId satr
         }
-        // Google flow: email/name/pending’ni token’ga yozamiz
+
         if (account?.provider === "google" && user) {
           token.googleEmail = user.email ?? null;
           token.googleName = user.name ?? null;
@@ -72,7 +78,6 @@ export const authOptions: NextAuthOptions = {
         }
         return token;
       } catch (e) {
-        // lint/SSR’ni yiqitmaslik
         console.error("jwt failed:", e);
         return token;
       }
@@ -81,48 +86,29 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       try {
         const userId = token.userId as string | undefined;
-        const gEmail = token.googleEmail as string | undefined;
         const pending = token.pendingOAuth as
           | { email?: string | null; fullName?: string | null }
           | undefined;
 
-        // 1) _id bo‘yicha profil
         if (userId) {
           const { data } = await axiosClient.get<ReturnActionType>(
             `/api/user/profile/${userId}`
           );
           session.currentUser = data.user;
-          if (session.user) {
-            session.user.name = userId;
-            session.user.email = data.user.email;
+          if (session.user && data.user) {
+            session.user.name =
+              data.user.fullName ?? data.user.name ?? session.user.name ?? null;
+            session.user.email = data.user.email ?? session.user.email ?? null;
+            session.user.image = data.user.image ?? session.user.image ?? null;
+            // id ni session.user ga ham yozmoqchi bo‘lsangiz:
+            (session.user as typeof session.user & { id?: string }).id =
+              data.user._id;
           }
           return session;
         }
 
-        // 2) email bo‘yicha fallback (googleEmail -> session.user.email -> pending.email)
-        const email = gEmail || session.user?.email || pending?.email;
-        if (email) {
-          try {
-            const { data } = await axiosClient.get<ReturnActionType>(
-              `/api/user/by-email/${encodeURIComponent(email)}`
-            );
-            if (data?.user?._id) {
-              session.currentUser = data.user;
-              if (session.user) {
-                session.user.name = data.user._id;
-                session.user.email = data.user.email;
-              }
-            }
-          } catch (e) {
-            console.error("session email fetch failed:", e);
-          }
-        }
-
-        // oldingi: pending && (session.pendingOAuth = pending)
-        if (pending) {
-          session.pendingOAuth = pending;
-        }
-
+        // email fallback qismi o‘zingizdagi kabi qoladi...
+        if (pending) session.pendingOAuth = pending;
         return session;
       } catch (e) {
         console.error("session failed:", e);

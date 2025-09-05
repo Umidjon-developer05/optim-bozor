@@ -66,7 +66,7 @@ const EditInformation: FC<Props> = ({ user }) => {
           <Avatar className="size-32">
             <AvatarImage src={user.image} alt={user.name} />
             <AvatarFallback className="bg-primary text-white text-6xl">
-              {user.name.charAt(0).toUpperCase()}
+              {user.fullName?.charAt(0)?.toUpperCase() ?? "U"}
             </AvatarFallback>
           </Avatar>
           <Dialog open={open} onOpenChange={setOpen}>
