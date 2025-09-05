@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "uz.optim_bozor.www.twa",
+      "sha256_cert_fingerprints": [
+        "63:AA:B0:46:94:1D:C1:A9:5C:40:C7:1D:6E:47:9C:58:CD:00:47:E6:1A:0A:38:4D:43:8D:DF:20:82:B2:83:21"
+      ]
+    }
+  }
+]

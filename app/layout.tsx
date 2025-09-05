@@ -7,7 +7,6 @@ import React, { FC } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import SessionProvider from "@/components/providers/session.provider";
 import NextTopLoader from "nextjs-toploader";
-import ClientToast from "@/components/providers/Client";
 import { ToastContainer } from "react-toastify";
 
 const montserrat = Montserrat({
@@ -57,7 +56,6 @@ const RootLayout: FC<ChildProps> = ({ children }) => {
           <link rel="manifest" href="/manifest.json" />
           <NextTopLoader showSpinner={false} />
           <main>{children}</main>
-          <ClientToast />
           <ToastContainer
             position="top-right"
             autoClose={5000}
