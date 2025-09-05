@@ -9,8 +9,8 @@ function AutoOAuthLogin() {
 
   useEffect(() => {
     (async () => {
-      const pending = (session as any)?.pendingOAuth; // agar session tipingiz kengaytirilgan bo‘lsa
-      const hasUser = (session as any)?.currentUser?._id;
+      const pending = session?.pendingOAuth; // agar session tipingiz kengaytirilgan bo‘lsa
+      const hasUser = session?.currentUser?._id;
       if (!pending?.email || hasUser) return;
 
       const res = await login({
