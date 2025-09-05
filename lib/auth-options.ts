@@ -65,7 +65,7 @@ export const authOptions: NextAuthOptions = {
 
         token.pendingOAuth = { email: user.email, fullName: user.name };
       }
-      return token as any;
+      return token;
     },
 
     async session({ session, token }) {
