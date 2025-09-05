@@ -73,7 +73,8 @@ const Header: FC<Props> = ({ session }) => {
             <div>
               {data?.user?.email && (
                 <span className="text-sm">
-                  Salom, {data.user.name || data.user.email}
+                  {data.user.email}
+                  Salom, {data.user.name}
                 </span>
               )}
             </div>
