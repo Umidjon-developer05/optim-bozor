@@ -200,7 +200,7 @@ export default function Footer() {
               </Link>
 
               <Link
-                href="https://t.me/optimbozor"
+                href="https://t.me/optimbozor_2025"
                 className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
                 aria-label="Telegram"
               >
