@@ -6,7 +6,7 @@ import { IUser } from "@/types";
 import { User, Heart, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { FC } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 interface Props {
   session?: IUser;
