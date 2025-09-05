@@ -73,7 +73,7 @@ export default function MapUser({
     fetchAddress(location.lat, location.lng).then((address) => {
       const withAddress = { ...updated, address };
       setSelectedLocation(withAddress);
-      onLocationSelect?.(withAddress as any);
+      onLocationSelect?.(withAddress);
     });
 
     if (!isInBukhara) {
@@ -111,7 +111,7 @@ export default function MapUser({
         fetchAddress(loc.lat, loc.lng).then((address) => {
           const withAddress = { ...updated, address };
           setUserLocation(withAddress);
-          onLocationSelect?.(withAddress as any);
+          onLocationSelect?.(withAddress);
         });
 
         setIsLocating(false);

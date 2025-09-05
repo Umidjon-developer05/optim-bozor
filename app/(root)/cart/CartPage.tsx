@@ -78,6 +78,13 @@ type LocationData = {
   totalPrice: number;
 };
 
+type MapLocation = {
+  lat: number;
+  lng: number;
+  address?: string;
+  isInBukhara: boolean;
+};
+
 // -----------------------------
 // Utils
 // -----------------------------
@@ -119,6 +126,9 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
 
   const groupedBySeller = useMemo(() => groupBySeller(products), [products]);
 
+  // Precompute total before any early returns (hooks order)
+  const grandTotal = useMemo(() => calculateTotalPrice(products), [products]);
+
   const handleLocationSelect = (location: LocationData | null) => {
     if (location) setSelectedLocation(location);
   };
@@ -135,7 +145,7 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
         />
         <Link href="/">
           <Button size="lg" className="w-full sm:w-auto">
-            Do'konga qaytish
+            Do&apos;konga qaytish
           </Button>
         </Link>
       </div>
@@ -209,9 +219,7 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
       setIsLoading(false);
     }
   }
-
-  // Mobile total for sticky bottom bar
-  const grandTotal = useMemo(() => calculateTotalPrice(products), [products]);
+  // Mobile total precomputed above
 
   return (
     <div className="container mx-auto py-4 sm:py-8 px-3 sm:px-4 pb-28">
@@ -238,7 +246,7 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
                 </div>
 
                 <CardContent className="p-0">
-                  {group.items.map((item, idx) => (
+                  {group.items.map((item) => (
                     <div
                       key={item._id}
                       className="p-3 sm:p-4 border-b last:border-b-0"
@@ -326,7 +334,7 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
                 {/* Seller subtotal */}
                 <div className="bg-gray-50 p-3 sm:p-4 flex items-center justify-between">
                   <span className="text-sm sm:text-base font-medium">
-                    Sotuvchi bo'yicha jami:
+                    Sotuvchi bo&apos;yicha jami:
                   </span>
                   <span className="font-bold text-base sm:text-lg">
                     {formatPrice(sellerSubtotal)}
@@ -342,7 +350,7 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
           <Card className="rounded-xl">
             <CardContent className="p-5 sm:p-6">
               <h2 className="text-lg sm:text-xl font-bold mb-4">
-                Buyurtma ma'lumotlari
+                Buyurtma ma&apos;lumotlari
               </h2>
 
               <div className="space-y-3 sm:space-y-4">
@@ -370,7 +378,7 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
                     onCheckedChange={handleInputChange}
                   />
                   <Label htmlFor="terms" className="text-sm cursor-pointer">
-                    Yetqazib berilgandan keyin to'lov qilish
+                    Yetqazib berilgandan keyin to&apos;lov qilish
                   </Label>
                 </div>
 
@@ -386,7 +394,7 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
                     >
                       <MapIcon className="h-4 w-4" />
                       {selectedLocation
-                        ? "Manzilni o'zgartirish"
+                        ? "Manzilni o&apos;zgartirish"
                         : "Turgan joyingizni tanlang"}
                     </Button>
                   </AlertDialogTrigger>
@@ -394,7 +402,7 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
                     <AlertDialogHeader className="p-0">
                       <div className="h-[70vh] sm:h-[65vh]">
                         <MapUser
-                          onLocationSelect={(location: any) =>
+                          onLocationSelect={(location: MapLocation | null) =>
                             location &&
                             handleLocationSelect({
                               ...location,
@@ -442,7 +450,7 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
                     ) : (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Noto'g'ri manzil</AlertTitle>
+                        <AlertTitle>Noto&apos;g&apos;ri manzil</AlertTitle>
                         <AlertDescription className="text-sm">
                           Tanlangan manzil Buxoro viloyati chegarasidan
                           tashqarida. Iltimos, boshqa manzil tanlang.
