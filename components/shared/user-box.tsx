@@ -1,6 +1,6 @@
+// components/shared/user-box.tsx
 "use client";
 
-import { IUser } from "@/types";
 import { FC, useState } from "react";
 import {
   DropdownMenu,
@@ -24,28 +24,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
+import type { DefaultSession } from "next-auth";
+
+// NextAuth foydalanuvchi tipi (session.user)
+type AuthUser = DefaultSession["user"]; // { name?: string | null; email?: string | null; image?: string | null }
 
 interface Props {
-  user: IUser;
+  user: AuthUser;
 }
+
 const UserBox: FC<Props> = ({ user }) => {
   const [open, setOpen] = useState(false);
+  const displayName = user?.name ?? user?.email ?? "User";
+  const firstLetter = displayName?.charAt(0)?.toUpperCase() ?? "U";
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild aria-label="user-profile">
           <Avatar className="cursor-pointer" aria-label="user-profile">
-            <AvatarImage
-              src={user.image}
-              alt={user.name}
-              aria-label="user-profile"
-            />
-            <AvatarFallback
-              className="capitalize bg-primary text-white"
-              aria-label="user-profile"
-            >
-              {user.name.charAt(0)}
+            <AvatarImage src={user?.image ?? undefined} alt={displayName} />
+            <AvatarFallback className="capitalize bg-primary text-white">
+              {firstLetter}
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
@@ -64,6 +64,7 @@ const UserBox: FC<Props> = ({ user }) => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent className="max-w-[500px]">
           <AlertDialogHeader>
@@ -72,8 +73,8 @@ const UserBox: FC<Props> = ({ user }) => {
             </AlertDialogTitle>
             <AlertDialogDescription>
               Akkauntizdan chiqish orqali siz barcha ma&apos;lumotlaringizni
-              yo&apos;qotishingiz mumkin. Agar sizda boshqa biron bir savol
-              bo&apos;lsa, iltimos, biz bilan bog&apos;laning.
+              yo&apos;qotishingiz mumkin. Agar savollaringiz bo‘lsa, biz bilan
+              bog‘laning.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -91,3 +92,4 @@ const UserBox: FC<Props> = ({ user }) => {
 };
 
 export default UserBox;
+	
