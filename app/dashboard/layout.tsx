@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import MobileSidebar from "./_components/mobile-sidebar";
 import { cn } from "@/lib/utils";
 import { ArrowBigLeftDash } from "lucide-react";
+import Link from "next/link";
 const Layout: FC<ChildProps> = async ({ children }) => {
   const session = await getServerSession(authOptions);
 
@@ -24,9 +25,9 @@ const Layout: FC<ChildProps> = async ({ children }) => {
         {/* Mobile Header with Sidebar Trigger */}
         <header className="h-16 md:hidden flex justify-between items-center border-b px-4">
           <div className="ml-4 font-semibold flex items-center gap-2">
-            <a href="/" className="flex items-center gap-1">
+            <Link href="/" className="flex items-center gap-1">
               <ArrowBigLeftDash className="w-5" />
-            </a>
+            </Link>
             <p>Dashboard</p>
           </div>
           <MobileSidebar />
