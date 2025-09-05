@@ -95,6 +95,7 @@ export const authOptions: NextAuthOptions = {
 
         // 2) userId yo‘q, lekin email bor — email bo‘yicha backend’dan olib ko‘ring (fallback)
         const email = session.user?.email || pending?.email;
+
         if (email) {
           try {
             // backend’da shunga mos endpoint bo‘lsa:

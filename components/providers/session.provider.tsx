@@ -1,37 +1,38 @@
 "use client";
-
-import { ReactNode, useEffect } from "react";
-import { SessionProvider, useSession } from "next-auth/react";
+import { useEffect } from "react";
+import { useSession, SessionProvider } from "next-auth/react";
 import { signIn } from "next-auth/react";
-import { login } from "@/actions/auth.action";
+import { login } from "@/actions/auth.action"; // sizdagi endpoint: email+pwd -> user
 
 function AutoOAuthLogin() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
 
   useEffect(() => {
     const run = async () => {
       const pending = session?.pendingOAuth;
       const hasUser = session?.currentUser?._id;
-      if (pending?.email && !hasUser) {
-        const res = await login({
-          email: pending.email as string,
-          password: "oauth_dummy_password",
-        });
-        if (res?.data?.user?._id) {
-          await signIn("credentials", {
-            userId: res.data.user._id,
-            callbackUrl: "/",
-          });
-        }
+      if (!pending?.email || hasUser) return;
+
+      // 1) backend'da user'ni yarat/ol (email + dummy password)
+      const res = await login({
+        email: pending.email,
+        password: "oauth_dummy_password",
+      });
+
+      // 2) credentials bilan "lokal" sessiyani mustahkamlash
+      const id = res?.data?.user?._id;
+      if (id) {
+        await signIn("credentials", { userId: id, redirect: false });
+        await update(); // sessionni qayta yuklab, UI'ga chiqaradi
       }
     };
     run();
-  }, [session]);
+  }, [session, update]);
 
   return null;
 }
 
-export default function Providers({ children }: { children: ReactNode }) {
+export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider refetchOnWindowFocus={false}>
       <AutoOAuthLogin />
