@@ -190,7 +190,7 @@ export default function MapUser({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[200px] sm:h-[60vh] w-full rounded-xl overflow-hidden mb-3 sm:mb-4 border">
+                  <div className="h-[200px] sm:h-[30vh] w-full rounded-xl overflow-hidden mb-3 sm:mb-4 border">
                     <MapWithNoSSR
                       center={[39.7747, 64.4286]}
                       onLocationSelect={handleLocationSelect}
