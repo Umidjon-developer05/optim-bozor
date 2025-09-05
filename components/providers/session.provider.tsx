@@ -1,8 +1,8 @@
-"use client";
+// app/providers.tsx — "use client"
+import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect } from "react";
-import { useSession, SessionProvider } from "next-auth/react";
 import { signIn } from "next-auth/react";
-import { login } from "@/actions/auth.action"; // sizdagi endpoint: email+pwd -> user
+import { login } from "@/actions/auth.action";
 
 function AutoOAuthLogin() {
   const { data: session, update } = useSession();
@@ -13,17 +13,14 @@ function AutoOAuthLogin() {
       const hasUser = session?.currentUser?._id;
       if (!pending?.email || hasUser) return;
 
-      // 1) backend'da user'ni yarat/ol (email + dummy password)
       const res = await login({
         email: pending.email,
         password: "oauth_dummy_password",
       });
-
-      // 2) credentials bilan "lokal" sessiyani mustahkamlash
       const id = res?.data?.user?._id;
       if (id) {
         await signIn("credentials", { userId: id, redirect: false });
-        await update(); // sessionni qayta yuklab, UI'ga chiqaradi
+        await update(); // /api/auth/session ni qayta olib keladi -> UI ko'radi
       }
     };
     run();

@@ -1,3 +1,4 @@
+// src/lib/auth-options.ts
 import { axiosClient } from "@/http/axios";
 import { ReturnActionType } from "@/types";
 import { NextAuthOptions } from "next-auth";
@@ -14,7 +15,7 @@ export const authOptions: NextAuthOptions = {
           const { data } = await axiosClient.get<ReturnActionType>(
             `/api/user/profile/${credentials?.userId}`
           );
-          if (!data?.user) return null; // muhim: xato o‘rniga null qaytaring
+          if (!data?.user) return null;
           return {
             id: data.user._id,
             email: data.user.email,
@@ -31,7 +32,6 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
 
-  // (ixtiyoriy) keraksiz murakkablik bo‘lmasa, cookie blokini olib tashlashingiz ham mumkin.
   cookies: {
     sessionToken: {
       name: "__Host-next-auth.session-token",
@@ -58,11 +58,15 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, account }) {
       try {
+        // Credentials flow: userId ni yozamiz
         if (account?.provider === "credentials" && user?.name) {
           token.userId = user.name as string; // _id
         }
+        // Google flow: token'ga email/name'ni aniq yozib qo'yamiz
         if (account?.provider === "google" && user) {
-          // Tarmoqqa bu yerda chiqmaymiz — faqat pending ma’lumot saqlaymiz
+          token.googleEmail = user.email ?? null;
+          token.googleName = user.name ?? null;
+          // pending ham qoldirsak bo'ladi
           token.pendingOAuth = {
             email: user.email,
             fullName: user.name,
@@ -71,52 +75,53 @@ export const authOptions: NextAuthOptions = {
         return token;
       } catch (e) {
         console.error("jwt failed:", e);
-        return token; // throw qilmaslik
+        return token;
       }
     },
 
     async session({ session, token }) {
       try {
         const userId = token?.userId as string | undefined;
+        const gEmail = token?.googleEmail as string | undefined;
         const pending = token?.pendingOAuth as
-          | { email?: string | null; fullName?: string | null }
+          | { email?: string | null }
           | undefined;
 
-        // 1) userId bo‘lsa – profilni _id bo‘yicha oling
+        // 1) userId bo'lsa — _id bo'yicha
         if (userId) {
-          const { data } = await axiosClient.get(`/api/user/profile/${userId}`);
+          const { data } = await axiosClient.get<ReturnActionType>(
+            `/api/user/profile/${userId}`
+          );
           session.currentUser = data.user;
-          if (session.user) {
-            session.user.name = userId;
-            session.user.email = data.user.email;
-          }
+          session.user &&
+            ((session.user.name = userId),
+            (session.user.email = data.user.email));
           return session;
         }
 
-        // 2) userId yo‘q, lekin email bor — email bo‘yicha backend’dan olib ko‘ring (fallback)
-        const email = session.user?.email || pending?.email;
-
+        // 2) email bo'yicha fallback (token.googleEmail -> session.user.email -> pending.email)
+        const email = gEmail || session.user?.email || pending?.email;
         if (email) {
           try {
-            // backend’da shunga mos endpoint bo‘lsa:
-            const { data } = await axiosClient.get(
+            const { data } = await axiosClient.get<ReturnActionType>(
               `/api/user/by-email/${encodeURIComponent(email)}`
             );
             if (data?.user?._id) {
               session.currentUser = data.user;
-              if (session.user) {
-                session.user.name = data.user._id;
-                session.user.email = data.user.email;
-              }
+              session.user &&
+                ((session.user.name = data.user._id),
+                (session.user.email = data.user.email));
             }
-          } catch {}
+          } catch (e) {
+            console.error("session email fetch failed:", e);
+          }
         }
 
-        if (pending) session.pendingOAuth = pending;
+        pending && (session.pendingOAuth = pending);
         return session;
       } catch (e) {
         console.error("session failed:", e);
-        return session; // hech bo‘lmasa minimal sessiya qaytsin
+        return session;
       }
     },
   },
@@ -124,6 +129,5 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   jwt: { secret: process.env.NEXT_PUBLIC_JWT_SECRET },
   secret: process.env.NEXTAUTH_SECRET,
-  // Diagnostika uchun:
   debug: process.env.NEXTAUTH_DEBUG === "true",
 };
