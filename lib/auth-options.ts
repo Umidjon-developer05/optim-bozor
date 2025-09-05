@@ -59,12 +59,10 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       try {
         if (account?.provider === "credentials" && user?.name) {
-          token.userId = user.name as string;
+          token.userId = user.name as string; // _id
         }
         if (account?.provider === "google" && user) {
-          // ❌ axiosClient.post(...) ni bu yerda QILMAYMIZ
-          // JWT callback har chaqirilganda tarmoqga chiqish — xatoga eng katta sabab.
-          // Biz faqat pending ma’lumotni saqlaymiz, qolganini Client’dagi AutoOAuthLogin bajaradi.
+          // Tarmoqqa bu yerda chiqmaymiz — faqat pending ma’lumot saqlaymiz
           token.pendingOAuth = {
             email: user.email,
             fullName: user.name,
@@ -72,34 +70,52 @@ export const authOptions: NextAuthOptions = {
         }
         return token;
       } catch (e) {
-        console.error("jwt callback failed:", e);
-        return token; // throw qilmaymiz
+        console.error("jwt failed:", e);
+        return token; // throw qilmaslik
       }
     },
 
     async session({ session, token }) {
       try {
         const userId = token?.userId as string | undefined;
-        const pendingOAuth = token?.pendingOAuth as
+        const pending = token?.pendingOAuth as
           | { email?: string | null; fullName?: string | null }
           | undefined;
 
+        // 1) userId bo‘lsa – profilni _id bo‘yicha oling
         if (userId) {
-          const { data } = await axiosClient.get<ReturnActionType>(
-            `/api/user/profile/${userId}`
-          );
+          const { data } = await axiosClient.get(`/api/user/profile/${userId}`);
           session.currentUser = data.user;
           if (session.user) {
             session.user.name = userId;
             session.user.email = data.user.email;
           }
+          return session;
         }
-        if (pendingOAuth) session.pendingOAuth = pendingOAuth;
 
+        // 2) userId yo‘q, lekin email bor — email bo‘yicha backend’dan olib ko‘ring (fallback)
+        const email = session.user?.email || pending?.email;
+        if (email) {
+          try {
+            // backend’da shunga mos endpoint bo‘lsa:
+            const { data } = await axiosClient.get(
+              `/api/user/by-email/${encodeURIComponent(email)}`
+            );
+            if (data?.user?._id) {
+              session.currentUser = data.user;
+              if (session.user) {
+                session.user.name = data.user._id;
+                session.user.email = data.user.email;
+              }
+            }
+          } catch {}
+        }
+
+        if (pending) session.pendingOAuth = pending;
         return session;
       } catch (e) {
-        console.error("session callback failed:", e);
-        return session; // throw qilmaymiz
+        console.error("session failed:", e);
+        return session; // hech bo‘lmasa minimal sessiya qaytsin
       }
     },
   },

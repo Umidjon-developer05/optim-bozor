@@ -3,7 +3,7 @@ const withPWA = require("next-pwa")({
   disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
-  runtimeCaching: [],
+  runtimeCaching: [], // hozircha caching yo‘q
 });
 
 const nextConfig = {
