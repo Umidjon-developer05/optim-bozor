@@ -23,6 +23,28 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
   ],
+  cookies: {
+    sessionToken: {
+      name: "__Host-next-auth.session-token",
+      options: { httpOnly: true, secure: true, sameSite: "lax", path: "/" },
+    },
+    callbackUrl: {
+      name: "__Host-next-auth.callback-url",
+      options: { secure: true, sameSite: "lax", path: "/" },
+    },
+    csrfToken: {
+      name: "__Host-next-auth.csrf-token",
+      options: { secure: true, sameSite: "lax", path: "/" },
+    },
+    state: {
+      name: "__Host-next-auth.state",
+      options: { httpOnly: true, secure: true, sameSite: "lax", path: "/" },
+    },
+    pkceCodeVerifier: {
+      name: "__Host-next-auth.pkce.code_verifier",
+      options: { httpOnly: true, secure: true, sameSite: "lax", path: "/" },
+    },
+  },
   callbacks: {
     async jwt({ token, user, account }) {
       if (account?.provider === "credentials" && user?.name) {
