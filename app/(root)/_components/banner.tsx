@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Banner data
+// Banner data (add alt for accessibility)
 const banners = [
-  { image: "/banner/maktab.png" },
-  { image: "/banner/fast-food.png" },
-  { image: "/banner/kiyimlar.png" },
+  { image: "/banner/maktab.png", alt: "Maktab mavzuli chegirmalar" },
+  { image: "/banner/fast-food.png", alt: "Fast food aksiyalari" },
+  { image: "/banner/kiyimlar.png", alt: "Kiyımlar kolleksiyasi" },
 ];
 
 // Motion variants
@@ -19,21 +19,15 @@ const variants = {
     x: direction > 0 ? 1000 : -1000,
     opacity: 0,
   }),
-  center: {
-    x: 0,
-    opacity: 1,
-  },
+  center: { x: 0, opacity: 1 },
   exit: (direction: number) => ({
     x: direction < 0 ? 1000 : -1000,
     opacity: 0,
   }),
 };
 
-const transition: {
-  x: { type: "spring"; stiffness: number; damping: number };
-  opacity: { duration: number };
-} = {
-  x: { type: "spring", stiffness: 300, damping: 30 },
+const transition = {
+  x: { type: "spring" as any, stiffness: 300, damping: 30 },
   opacity: { duration: 0.2 },
 };
 
@@ -41,23 +35,28 @@ export default function Banner() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(0);
 
-  const updateSlide = (index: number) => {
-    const newDirection = index > currentSlide ? 1 : -1;
-    setDirection(newDirection);
+  const goTo = (index: number) => {
+    setDirection(index > currentSlide ? 1 : -1);
     setCurrentSlide((index + banners.length) % banners.length);
   };
 
+  // Stable autoplay (doesn't reset every slide)
   useEffect(() => {
-    const interval = setInterval(() => {
-      updateSlide((currentSlide + 1) % banners.length);
+    const id = setInterval(() => {
+      setDirection(1);
+      setCurrentSlide((prev) => (prev + 1) % banners.length);
     }, 5000);
-    return () => clearInterval(interval);
-  }, [currentSlide]);
+    return () => clearInterval(id);
+  }, []);
 
   const banner = banners[currentSlide];
 
   return (
-    <div className="relative my-4 rounded-xl overflow-hidden h-[250px] sm:h-[300px] md:h-[500px]">
+    <div
+      className="relative w-full mb-2 overflow-hidden rounded-2xl sm:rounded-3xl shadow-sm aspect-[16/9] sm:aspect-[21/9]"
+      aria-roledescription="carousel"
+      aria-label="Reklama bannerlari"
+    >
       <AnimatePresence initial={false} custom={direction} mode="wait">
         <motion.div
           key={currentSlide}
@@ -67,31 +66,33 @@ export default function Banner() {
           animate="center"
           exit="exit"
           transition={transition}
-          className="relative w-full h-[400px] sm:h-[400px] md:h-[500px] rounded-xl overflow-hidden"
+          className="absolute inset-0"
+          aria-live="polite"
         >
-          {/* Background image */}
           <Image
             src={banner.image}
-            alt="Banner background"
+            alt={banner.alt}
             fill
-            className=" object-fill object-center"
+            className="object-cover"
             priority
           />
+          {/* Gentle gradient so any overlaid text (if added) remains readable */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-black/0 to-transparent pointer-events-none" />
         </motion.div>
       </AnimatePresence>
 
       {/* Dots */}
-      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+      <div className="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
         {banners.map((_, index) => (
           <button
             key={index}
-            onClick={() => updateSlide(index)}
-            aria-label={`Go to slide ${index + 1}`}
+            onClick={() => goTo(index)}
+            aria-label={`Slide ${index + 1} ga o'tish`}
             className="relative w-6 h-6 flex items-center justify-center rounded-full"
           >
             <span
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                index === currentSlide ? "bg-white scale-125" : "bg-white/50"
+              className={`w-2.5 h-2.5 rounded-full ring-1 ring-white/60 transition-all ${
+                index === currentSlide ? "bg-white scale-110" : "bg-white/50"
               }`}
             />
           </button>
@@ -102,21 +103,21 @@ export default function Banner() {
       <Button
         variant="outline"
         size="icon"
-        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full h-8 w-8 sm:h-10 sm:w-10 z-20"
-        onClick={() => updateSlide(currentSlide - 1)}
-        aria-label="Previous slide"
+        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/85 hover:bg-white rounded-full h-9 w-9 sm:h-10 sm:w-10 z-20 shadow ring-1 ring-black/5"
+        onClick={() => goTo(currentSlide - 1)}
+        aria-label="Oldingi slayd"
       >
-        <ChevronLeft className="h-4 w-4 sm:h-6 sm:w-6" />
+        <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
       </Button>
 
       <Button
         variant="outline"
         size="icon"
-        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full h-8 w-8 sm:h-10 sm:w-10 z-20"
-        onClick={() => updateSlide(currentSlide + 1)}
-        aria-label="Next slide"
+        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/85 hover:bg-white rounded-full h-9 w-9 sm:h-10 sm:w-10 z-20 shadow ring-1 ring-black/5"
+        onClick={() => goTo(currentSlide + 1)}
+        aria-label="Keyingi slayd"
       >
-        <ChevronRight className="h-4 w-4 sm:h-6 sm:w-6" />
+        <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
       </Button>
     </div>
   );

@@ -1,4 +1,4 @@
-import {  getProducts } from "@/actions/user.action";
+import { getProducts } from "@/actions/user.action";
 import Pagination from "@/components/shared/pagination";
 import { Separator } from "@/components/ui/separator";
 import { SearchParams } from "@/types";
@@ -35,7 +35,7 @@ const Page: FC<Props> = async (props) => {
   return (
     <>
       <div className="container max-w-7xl">
-        <div className="w-full">
+        <div className="w-full mt-2">
           <Banner />
         </div>
         <CategoryCards />

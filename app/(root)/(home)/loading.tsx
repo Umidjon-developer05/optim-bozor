@@ -3,19 +3,6 @@ import React from "react";
 const Loading = () => {
   return (
     <div className="container mx-auto px-4 py-6">
-      {/* Header and Navigation Skeleton */}
-      <div className="animate-pulse mb-6">
-        <div className="flex overflow-x-auto space-x-4 mb-4">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={`nav-${i}`}
-              className="h-6 bg-gray-200 rounded w-24 flex-shrink-0"
-            ></div>
-          ))}
-        </div>
-        <div className="h-10 bg-gray-200 rounded w-full mb-6"></div>
-      </div>
-
       {/* Banner Skeleton */}
       <div className="animate-pulse mb-8">
         <div className="bg-orange-100 rounded-lg p-6 flex flex-col md:flex-row items-center">
