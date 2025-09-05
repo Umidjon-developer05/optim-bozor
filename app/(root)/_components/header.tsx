@@ -11,8 +11,9 @@ import { useSession } from "next-auth/react";
 interface Props {
   session?: IUser;
 }
-const Header: FC<Props> = ({ session }) => {
+const Header: FC<Props> = () => {
   const { data } = useSession();
+  const session = data?.currentUser;
   console.log("session in header:", data);
   return (
     <div className="bg-white border-b sticky top-0  left-0 z-50  ">
@@ -70,14 +71,6 @@ const Header: FC<Props> = ({ session }) => {
                 </Link>
               </Button>
             )}
-            <div>
-              {data?.user?.email && (
-                <span className="text-sm">
-                  {data.user.email}
-                  Salom, {data.user.name}
-                </span>
-              )}
-            </div>
           </div>
         </div>
       </div>
