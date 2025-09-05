@@ -1,4 +1,6 @@
-// components/layout/header.tsx
+"use client";
+
+// components/layout/header.tsx (UPDATED)
 "use client";
 
 import UserBox from "@/components/shared/user-box";
@@ -7,11 +9,11 @@ import { User, Heart, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { FC } from "react";
 import { useSession } from "next-auth/react";
+import MobileBottomBar from "./mobile-bottom-bar";
 
 const Header: FC = () => {
   const { data } = useSession();
   const sessionUser = data?.user; // AuthUser
-  console.log("sessionUser:", sessionUser);
   return (
     <div className="bg-white border-b sticky top-0 left-0 z-50">
       <div className="container mx-auto">
@@ -25,22 +27,27 @@ const Header: FC = () => {
             </span>
           </Link>
 
-          <div className="flex items-center sm:gap-7 gap-2">
-            <Button variant="outline" className="sm:block hidden h-[40px]">
+          {/* Hide action buttons on mobile and show them only on sm+ */}
+          <div className="hidden sm:flex items-center gap-7">
+            <Button variant="outline" className="h-[40px]">
               <Link
                 href={sessionUser ? "/favorites" : "/sign-in"}
                 className="flex items-center gap-1 text-violet-600 hover:text-purple-600"
+                aria-label="Saralangan"
               >
                 <Heart size={20} />
                 <span className="hidden md:inline">Saralangan</span>
               </Link>
             </Button>
 
-            <Button variant="outline" className="h-[40px] px-4">
+            <Button
+              variant="outline"
+              className="h-[40px] px-4"
+              aria-label="Savat"
+            >
               <Link
                 href={sessionUser ? "/cart" : "/sign-in"}
                 className="flex items-center gap-1 text-violet-600 hover:text-purple-600"
-                aria-label="Savat sahifasiga o‘tish"
               >
                 <ShoppingBag size={20} />
                 <span className="hidden md:inline">Savat</span>
@@ -58,7 +65,6 @@ const Header: FC = () => {
                 <Link
                   href="/sign-in"
                   className="flex items-center gap-1 hover:text-purple-600"
-                  aria-label="Kirish"
                 >
                   <User size={20} className="text-violet-600" />
                   <span className="hidden md:inline text-violet-600">
@@ -70,6 +76,9 @@ const Header: FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile-only bottom bar with Saralangan & Savat */}
+      <MobileBottomBar />
     </div>
   );
 };
