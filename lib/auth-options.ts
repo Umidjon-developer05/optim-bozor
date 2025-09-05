@@ -1,4 +1,3 @@
-// src/lib/auth-options.ts
 import { axiosClient } from "@/http/axios";
 import { ReturnActionType } from "@/types";
 import { NextAuthOptions } from "next-auth";
@@ -11,15 +10,20 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: { userId: { label: "User ID", type: "text" } },
       async authorize(credentials) {
-        const { data } = await axiosClient.get<ReturnActionType>(
-          `/api/user/profile/${credentials?.userId}`
-        );
-        // NextAuth user obyekti
-        return {
-          id: data.user._id,
-          email: data.user.email,
-          name: data.user._id,
-        };
+        try {
+          const { data } = await axiosClient.get<ReturnActionType>(
+            `/api/user/profile/${credentials?.userId}`
+          );
+          if (!data?.user) return null; // muhim: xato o‘rniga null qaytaring
+          return {
+            id: data.user._id,
+            email: data.user.email,
+            name: data.user._id,
+          } as any;
+        } catch (e) {
+          // throw qilmaslik — aks holda error=Callback bo‘ladi
+          return null;
+        }
       },
     }),
     GoogleProvider({
@@ -28,7 +32,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
 
-  // ✅ Cookies: PWA/TWA uchun xavfsiz sozlamalar
+  // (ixtiyoriy) keraksiz murakkablik bo‘lmasa, cookie blokini olib tashlashingiz ham mumkin.
   cookies: {
     sessionToken: {
       name: "__Host-next-auth.session-token",
@@ -54,51 +58,56 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async jwt({ token, user, account }) {
-      if (account?.provider === "credentials" && user?.name) {
-        token.userId = user.name; // _id
+      try {
+        if (account?.provider === "credentials" && user?.name) {
+          token.userId = user.name as string;
+        }
+        if (account?.provider === "google" && user) {
+          // ❌ axiosClient.post(...) ni bu yerda QILMAYMIZ
+          // JWT callback har chaqirilganda tarmoqga chiqish — xatoga eng katta sabab.
+          // Biz faqat pending ma’lumotni saqlaymiz, qolganini Client’dagi AutoOAuthLogin bajaradi.
+          (token as any).pendingOAuth = {
+            email: user.email,
+            fullName: user.name,
+          };
+        }
+        return token;
+      } catch (e) {
+        console.error("jwt callback failed:", e);
+        return token; // throw qilmaymiz
       }
-      if (account?.provider === "google" && user) {
-        const { data } = await axiosClient.post<ReturnActionType>(
-          "/api/auth/oauth",
-          { email: user.email, fullName: user.name }
-        );
-        token.userId = data.user._id;
-
-        token.pendingOAuth = { email: user.email, fullName: user.name };
-      }
-      return token;
     },
 
     async session({ session, token }) {
-      const userId = token?.userId as string | undefined;
-      const pendingOAuth = token?.pendingOAuth as
-        | { email?: string | null; fullName?: string | null }
-        | undefined;
+      try {
+        const userId = (token as any)?.userId as string | undefined;
+        const pendingOAuth = (token as any)?.pendingOAuth as
+          | { email?: string | null; fullName?: string | null }
+          | undefined;
 
-      if (userId) {
-        const { data } = await axiosClient.get<ReturnActionType>(
-          `/api/user/profile/${userId}`
-        );
-        session.currentUser = data.user;
-        if (session.user) {
-          session.user.name = userId;
-          session.user.email = data.user.email;
+        if (userId) {
+          const { data } = await axiosClient.get<ReturnActionType>(
+            `/api/user/profile/${userId}`
+          );
+          (session as any).currentUser = data.user;
+          if (session.user) {
+            session.user.name = userId;
+            session.user.email = data.user.email;
+          }
         }
-      }
+        if (pendingOAuth) (session as any).pendingOAuth = pendingOAuth;
 
-      if (pendingOAuth) {
-        session.pendingOAuth = pendingOAuth;
+        return session;
+      } catch (e) {
+        console.error("session callback failed:", e);
+        return session; // throw qilmaymiz
       }
-
-      return session;
     },
   },
 
   session: { strategy: "jwt" },
-
-  // Eslatma: bu ixtiyoriy ichki JWT sir; NextAuth uchun esa quyidagi secret kerak
   jwt: { secret: process.env.NEXT_PUBLIC_JWT_SECRET },
-
-  // ✅ To'g'ri env nomi (oldin xato ko'rinishda edi)
   secret: process.env.NEXTAUTH_SECRET,
+  // Diagnostika uchun:
+  debug: process.env.NEXTAUTH_DEBUG === "true",
 };
