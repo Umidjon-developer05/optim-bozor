@@ -37,8 +37,8 @@ const Page: FC<Props> = async (props) => {
   const category: CategoriesResponse = await getCategories();
   return (
     <>
+      <Navigation categories={category?.categories || []} />
       <div className="container max-w-7xl">
-        <Navigation categories={category?.categories || []} />
         <SearchBar />
         <div className="w-full">
           <Banner />

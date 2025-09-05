@@ -92,4 +92,3 @@ const UserBox: FC<Props> = ({ user }) => {
 };
 
 export default UserBox;
-	

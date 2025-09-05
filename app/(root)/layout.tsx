@@ -5,7 +5,6 @@ async function layout({ children }: { children: React.ReactNode }) {
   return (
     <div>
       <Header />
-
       <main>{children}</main>
       <ScrollToTop />
     </div>
