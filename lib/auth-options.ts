@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
             id: data.user._id,
             email: data.user.email,
             name: data.user._id,
-          } as any;
+          };
         } catch (e) {
           // throw qilmaslik — aks holda error=Callback bo‘ladi
           return null;
@@ -66,7 +66,7 @@ export const authOptions: NextAuthOptions = {
           // ❌ axiosClient.post(...) ni bu yerda QILMAYMIZ
           // JWT callback har chaqirilganda tarmoqga chiqish — xatoga eng katta sabab.
           // Biz faqat pending ma’lumotni saqlaymiz, qolganini Client’dagi AutoOAuthLogin bajaradi.
-          (token as any).pendingOAuth = {
+          token.pendingOAuth = {
             email: user.email,
             fullName: user.name,
           };
@@ -80,8 +80,8 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       try {
-        const userId = (token as any)?.userId as string | undefined;
-        const pendingOAuth = (token as any)?.pendingOAuth as
+        const userId = token?.userId as string | undefined;
+        const pendingOAuth = token?.pendingOAuth as
           | { email?: string | null; fullName?: string | null }
           | undefined;
 
@@ -89,13 +89,13 @@ export const authOptions: NextAuthOptions = {
           const { data } = await axiosClient.get<ReturnActionType>(
             `/api/user/profile/${userId}`
           );
-          (session as any).currentUser = data.user;
+          session.currentUser = data.user;
           if (session.user) {
             session.user.name = userId;
             session.user.email = data.user.email;
           }
         }
-        if (pendingOAuth) (session as any).pendingOAuth = pendingOAuth;
+        if (pendingOAuth) session.pendingOAuth = pendingOAuth;
 
         return session;
       } catch (e) {
