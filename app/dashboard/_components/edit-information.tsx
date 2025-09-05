@@ -6,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -64,7 +64,7 @@ const EditInformation: FC<Props> = ({ user }) => {
             </Skeleton>
           )}
           <Avatar className="size-32">
-            {/* src={user.image} alt={user.name} /> */}
+            <AvatarImage src={user.image} alt={user.name} />
             <AvatarFallback className="bg-primary text-white text-6xl">
               {user.fullName?.charAt(0)?.toUpperCase() ?? "U"}
             </AvatarFallback>
@@ -102,7 +102,7 @@ const EditInformation: FC<Props> = ({ user }) => {
             <AccordionTrigger>
               <div className="flex flex-col space-y-0">
                 <h2 className="font-bold">Full Name</h2>
-                <p className="text-muted-foreground">{user.fullName}</p>
+                <p className="text-muted-foreground">{user.name}</p>
               </div>
             </AccordionTrigger>
             <AccordionContent className="border-l border-l-primary pl-4">

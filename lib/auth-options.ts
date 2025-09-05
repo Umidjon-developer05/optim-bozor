@@ -1,31 +1,42 @@
+// lib/authOptions.ts
 import { axiosClient } from "@/http/axios";
 import { ReturnActionType } from "@/types";
-import { NextAuthOptions } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+import type { NextAuthOptions, User } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 
 export const authOptions: NextAuthOptions = {
   providers: [
-    Credentials({
+    CredentialsProvider({
       name: "Credentials",
       credentials: { userId: { label: "User ID", type: "text" } },
       async authorize(credentials) {
-        try {
-          const { data } = await axiosClient.get<ReturnActionType>(
-            `/api/user/profile/${credentials?.userId}`
-          );
-          if (!data?.user) return null;
-          return {
-            id: data.user._id,
-            email: data.user.email,
-            name: data.user.fullName,
-            image: data.user.image,
-          };
-        } catch {
-          return null;
-        }
+        if (!credentials?.userId) return null;
+
+        const { data } = await axiosClient.get<ReturnActionType>(
+          `/api/user/profile/${credentials.userId}`
+        );
+
+        const u = data.user;
+        if (!u) return null;
+        const user: User & {
+          id: string;
+          phone?: string;
+          role?: string;
+          phone1?: string;
+        } = {
+          id: u._id,
+          email: u.email,
+          name: u.fullName,
+          phone: u.phone,
+          role: u.role,
+          image: u.phone1,
+        };
+
+        return user;
       },
     }),
+
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
@@ -57,68 +68,60 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async jwt({ token, user, account }) {
-      try {
-        // ❌ XATO:
-        // if (account?.provider === "credentials" && user?.name) {
-        //   token.userId = user.name as string;
-        // }
-
-        // ✅ TO‘G‘RI:
-        if (account?.provider === "credentials" && user?.id) {
-          token.userId = user.id as string; // ObjectId satr
-        }
-
-        if (account?.provider === "google" && user) {
-          token.googleEmail = user.email ?? null;
-          token.googleName = user.name ?? null;
-          token.pendingOAuth = {
-            email: user.email,
-            fullName: user.name,
-          };
-        }
-        return token;
-      } catch (e) {
-        console.error("jwt failed:", e);
-        return token;
+      // Credentials orqali kirganda: tokenga id/phone/role/sotuvchi yozamiz
+      if (account?.provider === "credentials" && user) {
+        const u = user;
+        token.userId = u.id;
+        token.phone = u.phone ?? "";
+        token.role = u.role;
       }
+
+      // Google orqali kirganda: onboarding uchun vaqtincha ma'lumot
+      if (account?.provider === "google" && user) {
+        token.pendingOAuth = { email: user.email, fullName: user.name };
+      }
+
+      return token;
     },
 
     async session({ session, token }) {
-      try {
-        const userId = token.userId as string | undefined;
-        const pending = token.pendingOAuth as
-          | { email?: string | null; fullName?: string | null }
-          | undefined;
+      const userId = token?.userId as string | undefined;
+      const pendingOAuth = token?.pendingOAuth as
+        | { email?: string | null; fullName?: string | null }
+        | undefined;
 
-        if (userId) {
-          const { data } = await axiosClient.get<ReturnActionType>(
-            `/api/user/profile/${userId}`
-          );
-          session.currentUser = data.user;
-          if (session.user && data.user) {
-            session.user.name =
-              data.user.fullName ?? data.user.name ?? session.user.name ?? null;
-            session.user.email = data.user.email ?? session.user.email ?? null;
-            session.user.image = data.user.image ?? session.user.image ?? null;
-            // id ni session.user ga ham yozmoqchi bo‘lsangiz:
-            (session.user as typeof session.user & { id?: string }).id =
-              data.user._id;
-          }
-          return session;
-        }
+      if (userId) {
+        // currentUser'ni to'liq DB'dan olish
+        const { data } = await axiosClient.get<ReturnActionType>(
+          `/api/user/profile/${userId}`
+        );
 
-        // email fallback qismi o‘zingizdagi kabi qoladi...
-        if (pending) session.pendingOAuth = pending;
-        return session;
-      } catch (e) {
-        console.error("session failed:", e);
-        return session;
+        session.currentUser = {
+          ...data.user,
+        };
+
+        // session.user ni ham to'ldirib qo'yamiz
+        session.user = session.user ?? {};
+        session.user.id = data.user._id;
+        session.user.name = data.user.fullName;
+        session.user.email = data.user.email;
+        session.user.phone = data.user.phone;
+        session.user.image = data.user.phone1;
+      } else if (token.phone) {
+        // fallback: agar fetch qilmasangiz, token'dagi phone'ni qo'yib yuboramiz
+        session.user = session.user ?? {};
+        session.user.phone = token.phone;
       }
+
+      if (pendingOAuth) {
+        session.pendingOAuth = pendingOAuth;
+      }
+
+      return session;
     },
   },
 
   session: { strategy: "jwt" },
   jwt: { secret: process.env.NEXT_PUBLIC_JWT_SECRET },
-  secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NEXTAUTH_DEBUG === "true",
+  secret: process.env.NEXT_AUTH_SECRET,
 };

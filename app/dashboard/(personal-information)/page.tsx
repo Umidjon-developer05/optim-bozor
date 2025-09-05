@@ -8,15 +8,14 @@ import { getStatistics } from "@/actions/user.action";
 const Page = async () => {
   const session = await getServerSession(authOptions);
   const res = await getStatistics();
-
   const statistics = res?.data?.statistics;
-
+  console.log(session?.user);
   return (
     <>
       <h1 className="text-xl font-semibold">Personal information</h1>
       <Separator className="my-3" />
       <EditInformation
-        user={JSON.parse(JSON.stringify(session?.currentUser))}
+        user={JSON.parse(JSON.stringify(session?.user))}
       />
       <div className="grid grid-cols-2 gap-4">
         <div className="border-2 p-2 flex justify-center flex-col space-y-2 items-center shadow-md hover:animate-pulse transition-all cursor-pointer">
