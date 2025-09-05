@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import {
   Minus,
@@ -9,7 +9,7 @@ import {
   Trash2,
   Check,
   AlertCircle,
-  Map as MapIcon,
+  Map,
   Loader,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,9 +38,6 @@ import {
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-// -----------------------------
-// Types
-// -----------------------------
 type Seller = {
   _id: string;
   fullName: string;
@@ -51,7 +48,7 @@ type Seller = {
 type Product = {
   productId: {
     _id: string;
-    userId: object;
+    userId: object; // Assuming userId is an object, you can define this more precisely if needed.
     title: string;
     price: number;
     description: string;
@@ -67,7 +64,7 @@ type Product = {
 };
 
 type CartProps = {
-  products: Product[];
+  products: Product[]; // This would be the array of products in the cart.
 };
 
 type LocationData = {
@@ -78,9 +75,6 @@ type LocationData = {
   totalPrice: number;
 };
 
-// -----------------------------
-// Utils
-// -----------------------------
 function formatPrice(price: number): string {
   return new Intl.NumberFormat("uz-UZ", {
     style: "currency",
@@ -91,22 +85,26 @@ function formatPrice(price: number): string {
 }
 
 function groupBySeller(products: Product[]) {
-  if (!Array.isArray(products))
-    return {} as Record<string, { seller: Seller; items: Product[] }>;
+  if (!Array.isArray(products)) return {};
 
   const grouped: Record<string, { seller: Seller; items: Product[] }> = {};
+
   products.forEach((item) => {
     const seller = item.selleronId;
     const sellerId = seller._id;
-    if (!grouped[sellerId]) grouped[sellerId] = { seller, items: [] };
+
+    if (!grouped[sellerId]) {
+      grouped[sellerId] = {
+        seller: seller,
+        items: [],
+      };
+    }
     grouped[sellerId].items.push(item);
   });
+
   return grouped;
 }
 
-// -----------------------------
-// Component
-// -----------------------------
 const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(
@@ -117,26 +115,25 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const groupedBySeller = useMemo(() => groupBySeller(products), [products]);
-
   const handleLocationSelect = (location: LocationData | null) => {
-    if (location) setSelectedLocation(location);
+    if (location) {
+      setSelectedLocation(location);
+    }
   };
 
   if (!products || products.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full mt-16 px-3">
+      <div className="flex flex-col items-center justify-center  h-full mt-20">
         <Image
           src="/savat.png"
-          alt="Bo'sh savat"
-          width={320}
-          height={320}
-          className="mb-4 w-64 h-64 object-contain"
+          alt="Empty Cart"
+          width={450}
+          height={450}
+          className="mb-4"
         />
-        <Link href="/">
-          <Button size="lg" className="w-full sm:w-auto">
-            Do'konga qaytish
-          </Button>
+
+        <Link href={"/"}>
+          <Button>Do&apos;konga qaytish</Button>
         </Link>
       </div>
     );
@@ -144,50 +141,73 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
 
   async function updateQuantity(productId: string, newQuantity: number) {
     if (newQuantity < 1) return;
-    const product = products.find((p) => p._id === productId);
+
+    // Find the product in the cart to get the correct productId and selleronId
+    const product = products.find((product) => product._id === productId);
+
     if (!product) return;
 
     try {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p._id === productId ? { ...p, quantity: newQuantity } : p
+      setProducts((prevProducts) =>
+        prevProducts.map((product) =>
+          product._id === productId
+            ? { ...product, quantity: newQuantity }
+            : product
         )
       );
+
+      // Then send the update to the server
       const updatedCart = await addToCart({
-        productId: product.productId._id,
+        productId: product.productId._id, // Use the actual product ID from the database
         quantity: newQuantity,
         selleronId: product.selleronId._id,
       });
-      if (updatedCart?.serverError) setProducts(initialProducts);
-    } catch (e) {
-      console.error("Error updating cart quantity:", e);
+
+      if (updatedCart?.serverError) {
+        // Revert the UI change if there was an error
+        setProducts(initialProducts);
+      }
+    } catch (error) {
+      console.error("Error updating cart quantity:", error);
+      // Revert the UI change if there was an error
       setProducts(initialProducts);
     }
   }
 
   const removeProduct = (productId: string) => {
-    setProducts((prev) => prev.filter((p) => p._id !== productId));
+    setProducts((prevProducts) =>
+      prevProducts.filter((product) => product._id !== productId)
+    );
   };
 
-  const calculateTotalPrice = (items: Product[]) =>
-    items.reduce((t, i) => t + i.productId.price * i.quantity, 0);
+  const calculateTotalPrice = (items: Product[]) => {
+    return items.reduce(
+      (total, item) => total + item.productId.price * item.quantity,
+      0
+    );
+  };
 
-  const handleInputChange = (e: boolean) => setChecked(!!e);
+  const handleInputChange = (e: boolean) => {
+    setChecked(e);
+  };
+
+  const groupedBySeller = groupBySeller(products);
 
   async function handleOrderZakaz() {
     try {
       setIsLoading(true);
-      if (!products?.length) {
+
+      if (products === null || products.length === 0) {
         setIsLoading(false);
         return console.error("No products in cart");
       }
 
       const response = await addOrdersZakaz({
         totalPrice: formatPrice(calculateTotalPrice(products)),
-        products: products.map((p) => ({
-          productId: p.productId._id,
-          selleronId: p.selleronId._id,
-          quantity: p.quantity,
+        products: products.map((product) => ({
+          productId: product.productId._id,
+          selleronId: product.selleronId._id,
+          quantity: product.quantity,
         })),
         latitude: selectedLocation?.lat,
         longitude: selectedLocation?.lng,
@@ -201,157 +221,135 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
       }
 
       const removeResponse = await removeFromCart();
-      if (removeResponse?.success === "Product removed from cart")
-        router.push("/success");
-      else setIsLoading(false);
+
+      if (removeResponse?.success === "Product removed from cart") {
+        router.push("/success"); // ✅ sahifaga o'tkazadi
+      } else {
+        setIsLoading(false);
+      }
     } catch (error) {
       console.error("Error creating order:", error);
       setIsLoading(false);
     }
   }
 
-  // Mobile total for sticky bottom bar
-  const grandTotal = useMemo(() => calculateTotalPrice(products), [products]);
-
   return (
-    <div className="container mx-auto py-4 sm:py-8 px-3 sm:px-4 pb-28">
-      {/* pb-28 for mobile sticky bar safe space */}
-      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Savat</h1>
+    <div className="container mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-6">Savat</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-        {/* Left: Items */}
-        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-          {Object.entries(groupedBySeller).map(([sellerId, group]) => {
-            const sellerSubtotal = calculateTotalPrice(group.items);
-            return (
-              <Card
-                key={sellerId}
-                className="overflow-hidden border rounded-xl"
-              >
-                <div className="bg-gray-50 p-3 sm:p-4">
-                  <h2 className="text-lg sm:text-xl font-semibold">
-                    Sotuvchi: {group.seller.fullName}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-gray-600 break-all">
-                    {group.seller.email}
-                  </p>
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+          {Object.entries(groupedBySeller).map(([sellerId, group]) => (
+            <Card key={sellerId} className="overflow-hidden">
+              <div className="bg-gray-50 p-4">
+                <h2 className="text-xl font-semibold">
+                  Sotuvchi: {group.seller.fullName}
+                </h2>
+                <p className="text-sm text-gray-600">{group.seller.email} </p>
+              </div>
 
-                <CardContent className="p-0">
-                  {group.items.map((item, idx) => (
-                    <div
-                      key={item._id}
-                      className="p-3 sm:p-4 border-b last:border-b-0"
-                    >
-                      <div className="flex gap-3 sm:gap-4">
-                        {/* Image */}
-                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
-                          <Image
-                            src={item.productId.image || "/placeholder.svg"}
-                            alt={item.productId.title}
-                            fill
-                            className="object-cover"
-                          />
+              <CardContent className="p-0">
+                {group.items.map((item) => (
+                  <div key={item._id} className="p-4 border-b last:border-b-0">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="relative w-full sm:w-24 h-24 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                        <Image
+                          src={item.productId.image || "/placeholder.svg"}
+                          alt={item.productId.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+
+                      <div className="flex-1 flex flex-col">
+                        <div className="flex justify-between">
+                          <h3 className="font-medium text-lg">
+                            {item.productId.title?.slice(0, 20)}...
+                          </h3>
+                          <p className="font-semibold">
+                            {formatPrice(item.productId.price * item.quantity)}
+                          </p>
                         </div>
 
-                        {/* Content */}
-                        <div className="flex-1 flex flex-col min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <h3
-                              className="font-medium text-base sm:text-lg truncate"
-                              title={item.productId.title}
-                            >
-                              {item.productId.title}
-                            </h3>
-                            <p className="font-semibold text-sm sm:text-base whitespace-nowrap">
-                              {formatPrice(
-                                item.productId.price * item.quantity
-                              )}
-                            </p>
-                          </div>
-
-                          {item.productId?.description && (
-                            <p className="text-xs sm:text-sm text-gray-500 line-clamp-2 mb-2">
-                              {item.productId.description}
-                            </p>
+                        <p className="text-sm text-gray-500 line-clamp-2 mb-2">
+                          {item.productId?.description?.slice(0, 30)}...
+                        </p>
+                        <span className="font-bold text-lg">
+                          {formatPrice(
+                            group.items.reduce(
+                              (total, item) =>
+                                total + item.productId?.price * item.quantity,
+                              0
+                            )
                           )}
+                        </span>
 
-                          <div className="mt-auto flex items-center justify-between gap-3">
-                            {/* Qty stepper */}
-                            <div className="flex items-center border rounded-md overflow-hidden">
-                              <Button
-                                aria-label="Kamaytirish"
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 rounded-none"
-                                onClick={() =>
-                                  updateQuantity(item._id, item.quantity - 1)
-                                }
-                              >
-                                <Minus className="h-4 w-4" />
-                              </Button>
-                              <span className="w-10 text-center text-sm sm:text-base">
-                                {item.quantity}
-                              </span>
-                              <Button
-                                aria-label="Ko'paytirish"
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 rounded-none"
-                                onClick={() =>
-                                  updateQuantity(item._id, item.quantity + 1)
-                                }
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-
-                            {/* Remove */}
+                        <div className="mt-auto flex justify-between items-center">
+                          <div className="flex items-center border rounded-md">
                             <Button
-                              aria-label="O'chirish"
                               variant="ghost"
                               size="icon"
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => removeProduct(item._id)}
+                              className="h-8 w-8 rounded-none"
+                              onClick={() =>
+                                updateQuantity(item._id, item.quantity - 1)
+                              }
                             >
-                              <Trash2 className="h-5 w-5" />
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-10 text-center">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 rounded-none"
+                              onClick={() =>
+                                updateQuantity(item._id, item.quantity + 1)
+                              }
+                            >
+                              <Plus className="h-4 w-4" />
                             </Button>
                           </div>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => removeProduct(item._id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </CardContent>
+                  </div>
+                ))}
+              </CardContent>
 
-                {/* Seller subtotal */}
-                <div className="bg-gray-50 p-3 sm:p-4 flex items-center justify-between">
-                  <span className="text-sm sm:text-base font-medium">
-                    Sotuvchi bo'yicha jami:
-                  </span>
-                  <span className="font-bold text-base sm:text-lg">
-                    {formatPrice(sellerSubtotal)}
-                  </span>
-                </div>
-              </Card>
-            );
-          })}
+              <div className="bg-gray-50 p-4 flex justify-between items-center">
+                <span className="font-medium">
+                  Sotuvchi bo&apos;yicha jami:
+                </span>
+                <span className="font-bold text-lg">{}</span>
+              </div>
+            </Card>
+          ))}
         </div>
 
-        {/* Right: Summary (desktop/tablet) */}
-        <div className="lg:col-span-1 hidden sm:block">
-          <Card className="rounded-xl">
-            <CardContent className="p-5 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-bold mb-4">
-                Buyurtma ma'lumotlari
+        <div className="lg:col-span-1">
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold mb-4">
+                Buyurtma ma&apos;lumotlari
               </h2>
 
-              <div className="space-y-3 sm:space-y-4">
-                <div className="flex justify-between text-sm sm:text-base">
+              <div className="space-y-4">
+                <div className="flex justify-between">
                   <span className="text-gray-600">
                     Mahsulotlar ({products.length})
                   </span>
                 </div>
-                <div className="flex justify-between text-sm sm:text-base">
+                <div className="flex justify-between">
                   <span className="text-gray-600">Yetkazib berish</span>
                   <span>Bepul</span>
                 </div>
@@ -360,53 +358,53 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
 
                 <div className="flex justify-between font-bold text-lg">
                   <span>Jami</span>
-                  <span>{formatPrice(grandTotal)}</span>
+                  <span>{formatPrice(calculateTotalPrice(products))}</span>
                 </div>
-
-                <div className="flex items-center gap-2 cursor-pointer">
+                <div className="flex items-center space-x-2 cursor-pointer">
                   <Checkbox
                     id="terms"
                     checked={checked}
                     onCheckedChange={handleInputChange}
                   />
-                  <Label htmlFor="terms" className="text-sm cursor-pointer">
-                    Yetqazib berilgandan keyin to'lov qilish
+                  <Label
+                    htmlFor="terms"
+                    className="text-sm cursor-pointer font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Yetqazib berilgandan keyin to&apos;lov qilish
                   </Label>
                 </div>
 
-                {/* Location picker */}
                 <AlertDialog
                   open={isLocationDialogOpen}
                   onOpenChange={setIsLocationDialogOpen}
                 >
                   <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full flex items-center justify-center gap-2"
-                    >
-                      <MapIcon className="h-4 w-4" />
+                    <Button variant="outline" className="w-full">
+                      {selectedLocation ? (
+                        <Map className="mr-2 h-4 w-4" />
+                      ) : (
+                        <Map className="mr-2 h-4 w-4" />
+                      )}
                       {selectedLocation
                         ? "Manzilni o'zgartirish"
-                        : "Turgan joyingizni tanlang"}
+                        : "Turgan joyizni tanlang"}
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="w-[96vw] sm:w-[90vw] max-w-[960px] max-h-[85vh] overflow-hidden p-0">
-                    <AlertDialogHeader className="p-0">
-                      <div className="h-[70vh] sm:h-[65vh]">
-                        <MapUser
-                          onLocationSelect={(location: any) =>
-                            location &&
-                            handleLocationSelect({
-                              ...location,
-                              lat: location.lat.toString(),
-                              lng: location.lng.toString(),
-                              totalPrice: grandTotal,
-                            })
-                          }
-                        />
-                      </div>
+                  <AlertDialogContent className="w-[90vw] max-w-[1200px]">
+                    <AlertDialogHeader>
+                      <MapUser
+                        onLocationSelect={(location) =>
+                          location &&
+                          handleLocationSelect({
+                            ...location,
+                            lat: location.lat.toString(),
+                            lng: location.lng.toString(),
+                            totalPrice: calculateTotalPrice(products),
+                          })
+                        }
+                      />
                     </AlertDialogHeader>
-                    <AlertDialogFooter className="p-3 sm:p-4">
+                    <AlertDialogFooter>
                       <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
                       <AlertDialogAction
                         disabled={
@@ -420,9 +418,8 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
                   </AlertDialogContent>
                 </AlertDialog>
 
-                {/* Location status */}
                 {selectedLocation && (
-                  <div className="mt-2">
+                  <div className="mt-4">
                     {selectedLocation.isInBukhara ? (
                       <Alert
                         variant="default"
@@ -432,17 +429,17 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
                         <AlertTitle>Manzil tasdiqlandi</AlertTitle>
                         <AlertDescription className="text-sm">
                           {selectedLocation.address ||
-                            `${Number.parseFloat(selectedLocation.lat).toFixed(
+                            `${Number.parseFloat(selectedLocation?.lat).toFixed(
                               6
                             )}, ${Number.parseFloat(
-                              selectedLocation.lng
+                              selectedLocation?.lng
                             ).toFixed(6)}`}
                         </AlertDescription>
                       </Alert>
                     ) : (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Noto'g'ri manzil</AlertTitle>
+                        <AlertTitle>Noto&apos;g&apos;ri manzil</AlertTitle>
                         <AlertDescription className="text-sm">
                           Tanlangan manzil Buxoro viloyati chegarasidan
                           tashqarida. Iltimos, boshqa manzil tanlang.
@@ -451,8 +448,6 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
                     )}
                   </div>
                 )}
-
-                {/* Optional external action */}
                 <CreateOrderButton
                   productId={""}
                   disabled={
@@ -463,7 +458,7 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
                 />
 
                 <Button
-                  className="w-full mt-2"
+                  className="w-full mt-4"
                   size="lg"
                   disabled={
                     !selectedLocation ||
@@ -482,39 +477,6 @@ const CartPage: React.FC<CartProps> = ({ products: initialProducts }) => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
-
-      {/* Mobile sticky summary bar */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/70">
-        <div className="max-w-screen-md mx-auto px-3 py-2 pb-[calc(env(safe-area-inset-bottom)+8px)] flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs text-gray-500">Jami</p>
-            <p className="text-lg font-bold">{formatPrice(grandTotal)}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsLocationDialogOpen(true)}
-              className="flex items-center gap-1"
-            >
-              <MapIcon className="h-4 w-4" /> Manzil
-            </Button>
-            <Button
-              size="lg"
-              onClick={handleOrderZakaz}
-              disabled={
-                !selectedLocation ||
-                !selectedLocation.isInBukhara ||
-                !checked ||
-                isLoading
-              }
-              className="min-w-[140px]"
-            >
-              {isLoading ? <Loader className="animate-spin" /> : "Buyurtma"}
-            </Button>
-          </div>
         </div>
       </div>
     </div>
