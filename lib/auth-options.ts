@@ -1,3 +1,4 @@
+// src/lib/auth-options.ts
 import { axiosClient } from "@/http/axios";
 import { ReturnActionType } from "@/types";
 import { NextAuthOptions } from "next-auth";
@@ -13,9 +14,8 @@ export const authOptions: NextAuthOptions = {
         const { data } = await axiosClient.get<ReturnActionType>(
           `/api/user/profile/${credentials?.userId}`
         );
-        return JSON.parse(
-          JSON.stringify({ email: data.user.email, name: data.user._id })
-        );
+        // NextAuth user obyekti
+        return { email: data.user.email, name: data.user._id } as any;
       },
     }),
     GoogleProvider({
@@ -23,6 +23,8 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
   ],
+
+  // ✅ Cookies: PWA/TWA uchun xavfsiz sozlamalar
   cookies: {
     sessionToken: {
       name: "__Host-next-auth.session-token",
@@ -45,19 +47,23 @@ export const authOptions: NextAuthOptions = {
       options: { httpOnly: true, secure: true, sameSite: "lax", path: "/" },
     },
   },
+
   callbacks: {
     async jwt({ token, user, account }) {
       if (account?.provider === "credentials" && user?.name) {
-        token.userId = user.name;
+        token.userId = user.name; // _id
       }
       if (account?.provider === "google" && user) {
-        token.pendingOAuth = {
-          email: user.email,
-          fullName: user.name,
-        };
+        // Agar backend orqali user yaratsangiz/olib kelsangiz, shu yerda token.userId ni to'ldiring
+        // Masalan:
+        // const { data } = await axiosClient.post<ReturnActionType>("/api/auth/oauth", { email: user.email, fullName: user.name });
+        // token.userId = data.user._id;
+
+        token.pendingOAuth = { email: user.email, fullName: user.name };
       }
-      return token;
+      return token as any;
     },
+
     async session({ session, token }) {
       const userId = token?.userId as string | undefined;
       const pendingOAuth = token?.pendingOAuth as
@@ -68,17 +74,26 @@ export const authOptions: NextAuthOptions = {
         const { data } = await axiosClient.get<ReturnActionType>(
           `/api/user/profile/${userId}`
         );
-        session.currentUser = data.user;
-        if (session.user) session.user.name = userId;
+        (session as any).currentUser = data.user;
+        if (session.user) {
+          session.user.name = userId;
+          session.user.email = data.user.email;
+        }
       }
 
       if (pendingOAuth) {
-        session.pendingOAuth = pendingOAuth;
+        (session as any).pendingOAuth = pendingOAuth;
       }
+
       return session;
     },
   },
+
   session: { strategy: "jwt" },
+
+  // Eslatma: bu ixtiyoriy ichki JWT sir; NextAuth uchun esa quyidagi secret kerak
   jwt: { secret: process.env.NEXT_PUBLIC_JWT_SECRET },
-  secret: process.env.NEXT_AUTH_SECRET,
+
+  // ✅ To'g'ri env nomi (oldin xato ko'rinishda edi)
+  secret: process.env.NEXTAUTH_SECRET,
 };
