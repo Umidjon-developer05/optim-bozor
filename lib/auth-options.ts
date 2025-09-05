@@ -1,4 +1,3 @@
-// src/lib/auth-options.ts
 import { axiosClient } from "@/http/axios";
 import { ReturnActionType } from "@/types";
 import { NextAuthOptions } from "next-auth";
@@ -58,15 +57,14 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, account }) {
       try {
-        // Credentials flow: userId ni yozamiz
+        // Credentials flow: _id ni yozamiz
         if (account?.provider === "credentials" && user?.name) {
-          token.userId = user.name as string; // _id
+          token.userId = user.name as string;
         }
-        // Google flow: token'ga email/name'ni aniq yozib qo'yamiz
+        // Google flow: email/name/pending’ni token’ga yozamiz
         if (account?.provider === "google" && user) {
           token.googleEmail = user.email ?? null;
           token.googleName = user.name ?? null;
-          // pending ham qoldirsak bo'ladi
           token.pendingOAuth = {
             email: user.email,
             fullName: user.name,
@@ -74,6 +72,7 @@ export const authOptions: NextAuthOptions = {
         }
         return token;
       } catch (e) {
+        // lint/SSR’ni yiqitmaslik
         console.error("jwt failed:", e);
         return token;
       }
@@ -81,25 +80,26 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       try {
-        const userId = token?.userId as string | undefined;
-        const gEmail = token?.googleEmail as string | undefined;
-        const pending = token?.pendingOAuth as
-          | { email?: string | null }
+        const userId = token.userId as string | undefined;
+        const gEmail = token.googleEmail as string | undefined;
+        const pending = token.pendingOAuth as
+          | { email?: string | null; fullName?: string | null }
           | undefined;
 
-        // 1) userId bo'lsa — _id bo'yicha
+        // 1) _id bo‘yicha profil
         if (userId) {
           const { data } = await axiosClient.get<ReturnActionType>(
             `/api/user/profile/${userId}`
           );
           session.currentUser = data.user;
-          session.user &&
-            ((session.user.name = userId),
-            (session.user.email = data.user.email));
+          if (session.user) {
+            session.user.name = userId;
+            session.user.email = data.user.email;
+          }
           return session;
         }
 
-        // 2) email bo'yicha fallback (token.googleEmail -> session.user.email -> pending.email)
+        // 2) email bo‘yicha fallback (googleEmail -> session.user.email -> pending.email)
         const email = gEmail || session.user?.email || pending?.email;
         if (email) {
           try {
@@ -108,16 +108,21 @@ export const authOptions: NextAuthOptions = {
             );
             if (data?.user?._id) {
               session.currentUser = data.user;
-              session.user &&
-                ((session.user.name = data.user._id),
-                (session.user.email = data.user.email));
+              if (session.user) {
+                session.user.name = data.user._id;
+                session.user.email = data.user.email;
+              }
             }
           } catch (e) {
             console.error("session email fetch failed:", e);
           }
         }
 
-        pending && (session.pendingOAuth = pending);
+        // oldingi: pending && (session.pendingOAuth = pending)
+        if (pending) {
+          session.pendingOAuth = pending;
+        }
+
         return session;
       } catch (e) {
         console.error("session failed:", e);
