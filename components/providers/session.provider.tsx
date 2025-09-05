@@ -1,24 +1,24 @@
 "use client";
 
-import { ChildProps } from "@/types";
-import { SessionProvider as Session, useSession } from "next-auth/react";
-import { FC, useEffect } from "react";
-import { login } from "@/actions/auth.action";
+import { ReactNode, useEffect } from "react";
+import { SessionProvider, useSession } from "next-auth/react";
 import { signIn } from "next-auth/react";
+import { login } from "@/actions/auth.action";
 
-const AutoOAuthLogin: FC = () => {
+function AutoOAuthLogin() {
   const { data: session } = useSession();
+
   useEffect(() => {
     const run = async () => {
-      const pending = session?.pendingOAuth;
-      const hasUser = session?.currentUser?._id;
-      if (pending?.email && !hasUser && typeof window !== "undefined") {
+      const pending = (session as any)?.pendingOAuth;
+      const hasUser = (session as any)?.currentUser?._id;
+      if (pending?.email && !hasUser) {
         const res = await login({
           email: pending.email as string,
           password: "oauth_dummy_password",
         });
         if (res?.data?.user?._id) {
-          signIn("credentials", {
+          await signIn("credentials", {
             userId: res.data.user._id,
             callbackUrl: "/",
           });
@@ -27,16 +27,15 @@ const AutoOAuthLogin: FC = () => {
     };
     run();
   }, [session]);
-  return null;
-};
 
-const SessionProvider: FC<ChildProps> = ({ children }) => {
+  return null;
+}
+
+export default function Providers({ children }: { children: ReactNode }) {
   return (
-    <Session>
+    <SessionProvider refetchOnWindowFocus={false}>
       <AutoOAuthLogin />
       {children}
-    </Session>
+    </SessionProvider>
   );
-};
-
-export default SessionProvider;
+}

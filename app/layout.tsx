@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import React, { FC } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import SessionProvider from "@/components/providers/session.provider";
+import Providers from "@/components/providers/session.provider";
 import NextTopLoader from "nextjs-toploader";
 import { ToastContainer } from "react-toastify";
 
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
 
 const RootLayout: FC<ChildProps> = ({ children }) => {
   return (
-    <SessionProvider>
+    <Providers>
       <html lang="uz" suppressHydrationWarning>
         <body
           className={`${montserrat.className} antialiased`}
@@ -64,7 +64,7 @@ const RootLayout: FC<ChildProps> = ({ children }) => {
           <Toaster />
         </body>
       </html>
-    </SessionProvider>
+    </Providers>
   );
 };
 
