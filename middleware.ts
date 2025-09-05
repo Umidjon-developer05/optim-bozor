@@ -65,5 +65,6 @@ export function middleware(req: NextRequest) {
  * ildiz, sahifalar, API/TRPC yo‘llar ishlovdan o‘tadi
  */
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: ["/((?!api|_next/static|_next/image|.*\\.png$).*)"],
+  runtime: "nodejs",
 };
