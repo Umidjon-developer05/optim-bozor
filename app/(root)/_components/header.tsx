@@ -56,6 +56,7 @@ const Header: FC = () => {
               )}
             </div>
 
+            
             {/* Hide action buttons on mobile and show them only on sm+ */}
             <div className="hidden sm:flex items-center gap-3 md:gap-5 lg:gap-7">
               <Button variant="outline" className="h-[40px] rounded-xl">
